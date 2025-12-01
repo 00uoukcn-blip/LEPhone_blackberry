@@ -1,0 +1,542 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LEPhone_黑莓</title>
+<meta name="theme-color" content="#ffffff" id="theme-color-meta"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="LEPhone_黑莓"><link rel="apple-touch-icon" href="https://iili.io/fxKEQjf.png"><link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* 全局重置样式 */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}html,body{height:100%;margin:0}::-webkit-scrollbar{display:none}
+
+/* 页面主体布局 - 居中显示并添加渐变背景 */
+body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f3f6f8,#ffffff);font-family:'Segoe UI',Arial,sans-serif;padding:20px}
+
+/* 手机外壳容器 - 黑色边框和圆角 */
+.phone{position:relative;width:400px;height:580px;background:#e8e9eb;border-radius:40px;box-shadow:0 20px 60px rgba(0,0,0,.15);border:10px solid #000;overflow:hidden}
+
+/* 手机顶部装饰区域 */
+.phone-top{position:absolute;top:0;left:0;width:100%;height:60px;background:linear-gradient(180deg,#f0f1f3,#e3e4e6);border-bottom:1px solid #d0d1d3;z-index:10}
+
+/* 顶部装饰圆点 */
+.decor-dot{position:absolute;top:15px;left:95px;width:17px;height:8px;background:#000;border-radius:10px}
+
+/* 听筒扬声器 */
+.speaker{position:absolute;top:15px;left:50%;transform:translateX(-50%);width:100px;height:8px;background:linear-gradient(90deg,#999,#666);border-radius:10px;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+
+/* 前置摄像头 */
+.camera-front{position:absolute;top:15px;right:100px;width:8px;height:8px;background:#1a1a1a;border-radius:50%}
+
+/* 品牌标识 */
+.brand{position:absolute;top:35px;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#7a7a7a;font-weight:600;letter-spacing:1px}
+
+/* 主屏幕显示区域 */
+.screen{position:absolute;top:210px;left:50%;transform:translate(-50%,-50%);width:320px;height:300px;background:#000;border:2px solid #000;border-radius:3px;overflow:hidden}
+
+/* 锁屏/主页背景 */
+.wallpaper{position:absolute;top:0;left:0;width:100%;height:100%;background-image:url('https://iili.io/fovI1aV.png');background-size:cover;background-position:center;z-index:1}
+
+/* 顶部状态栏 */
+.status-bar{position:absolute;top:8px;left:0;width:100%;height:24px;display:flex;justify-content:space-between;align-items:center;padding:0 12px;color:#fff;font-size:12px;z-index:5}
+
+/* 状态栏左侧元素容器 */
+.status-left{display:flex;gap:8px;align-items:center}
+
+/* 状态栏右侧元素容器 */
+.status-right{display:flex;gap:6px;align-items:center}
+
+/* 锁屏时间显示区域 */
+.lockscreen-time{position:absolute;top:30px;left:50%;transform:translateX(-50%);text-align:center;color:#fff;z-index:3;text-shadow:0 4px 12px rgba(0,0,0,.4)}
+
+/* 时间数字样式 */
+.time{font-size:68px;font-weight:300;letter-spacing:-2px;line-height:1;margin-bottom:8px}
+
+/* 日期显示样式 */
+.date{position:absolute;top:60px;left:-15px;display:flex;gap:4px;font-size:15px;opacity:.95;font-weight:400}
+
+/* 上午/下午标识 */
+.period{position:absolute;top:-20px;left:px}
+
+/* 完整日期文本 */
+.fulldate{}
+
+/* 锁屏图标组容器 */
+.lockscreen-icons{position:absolute;left:16px;top:40px;display:flex;flex-direction:column;gap:12px;z-index:4}
+
+/* 主页内容容器 */
+.homescreen{position:absolute;top:0;left:0;width:100%;height:100%;padding:10px;z-index:2;display:none}
+
+/* 底部APP Dock */
+.app-dock{position:absolute;bottom:15px;left:0;width:100%;height:70px;background:transparent;display:flex;justify-content:space-around;align-items:center;padding:0 15px}
+
+/* 单个APP容器 */
+.app-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#2c2c2c;text-shadow:none;cursor:pointer;width:70px;height:70px}
+
+/* APP图标的外框 */
+.app-icon-frame{width:48px;height:48px;background:#fff;border-radius:12px;box-shadow:0 2px 5px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;margin-bottom:3px}
+
+/* APP图标本身 */
+.app-icon i{font-size:24px;color:#000}
+
+/* APP标签 */
+.app-icon .app-label{font-size:11px;font-weight:500;white-space:nowrap;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+
+/* 单个锁屏图标样式 */
+.lock-icon{display:flex;align-items:center;gap:6px;color:#fff;font-size:11px;background:rgba(255,255,255,.15);padding:6px 10px;border-radius:12px;backdrop-filter:blur(10px)}
+
+/* 相机快捷启动按钮 */
+.camera-shortcut{position:absolute;right:10px;bottom:2px;width:48px;height:48px;background:rgba(122,122,122,0.3);border-radius:2px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;backdrop-filter:blur(10px);z-index:4}
+
+/* 聊天气泡与设置页样式 */
+.chat-room{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:20;display:none;flex-direction:column}.chat-room .msg-header{position:absolute;top:0;left:0;width:100%;height:45px;display:flex;align-items:center;z-index:10;background:none;border-bottom:none}.chat-list{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;padding-top:55px}.chat-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px}.chat-row.right{flex-direction:row-reverse}.chat-bubble{max-width:70%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4;position:relative}.chat-bubble.left{background:#000;color:#fff;border-radius:2px 12px 12px 12px}.chat-bubble.right{background:#fff;color:#000;border:1px solid #000;border-radius:12px 2px 12px 12px}.chat-avatar-s{width:32px;height:32px;border-radius:50%;background-size:cover;background-position:center;background-color:#eee;flex-shrink:0}.chat-spacer{width:32px;flex-shrink:0}.chat-input-bar{display:none;padding:10px;background:#fff;border-top:2px solid #000;flex-shrink:0}.chat-input-fake{width:100%;height:36px;border:2px solid #000;border-radius:4px;background:#fff;display:flex;align-items:center;padding:0 8px;font-size:12px;color:#999}.msg-settings-view{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:25;display:none;flex-direction:column;overflow-y:auto}.msg-set-header{border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;padding:12px 15px;font-weight:bold;background:#f9f9f9}.msg-set-body{padding:15px}.msg-set-row{margin-bottom:15px}.msg-set-label{font-size:12px;font-weight:bold;margin-bottom:5px;color:#333}.msg-set-input{width:100%;padding:6px;border:1px solid #ccc;border-radius:4px;font-size:12px}.user-avatar-upload{width:60px;height:60px;border-radius:50%;border:1px solid #ccc;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto 10px auto}.preview-wall{width:100%;height:100px;background:#eee;border:1px dashed #999;margin-top:5px;background-size:cover;background-position:center}.red-btn{background:#d9534f;color:#fff;border:none;padding:8px;width:100%;border-radius:4px;margin-top:20px}
+
+/* 导航按钮区域容器 */
+.nav-buttons{position:absolute;top:363px;left:0;width:100%;height:40px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;z-index:1}
+
+/* 导航按钮组（左右两组） */
+.nav-group{display:flex;gap:25px;align-items:center}
+
+/* 单个导航按钮样式 */
+.nav-group .nav-btn{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#333;cursor:pointer;z-index:1}
+
+/* 中央触控板 */
+.trackpad{position:relative;width:40px;height:40px;background:linear-gradient(180deg,#2c2c2c,#1a1a1a);border-radius:10px;border:2px solid #888;box-shadow:0 2px 3px rgba(0,0,0,.3);z-index:1;cursor:pointer;overflow:hidden}
+
+/* 触控板中心点击区 */
+.trackpad-center{position:absolute;top:8px;left:8px;width:20px;height:20px;background:rgba(255,255,255,.1);border-radius:4px;z-index:10}
+
+/* 触控板导航区（上下左右） */
+.trackpad-nav{position:absolute;inset:0;background:transparent}
+/* 触控板导航区 - 上 (梯形) */
+.trackpad-nav.nav-up{clip-path:polygon(0 0, 100% 0, 80% 30%, 20% 30%);}
+/* 触控板导航区 - 下 (梯形) */
+.trackpad-nav.nav-down{clip-path:polygon(20% 70%, 80% 70%, 100% 100%, 0 100%);}
+/* 触控板导航区 - 左 (梯形) */
+.trackpad-nav.nav-left{clip-path:polygon(0 0, 30% 20%, 30% 80%, 0 100%);}
+/* 触控板导航区 - 右 (梯形) */
+.trackpad-nav.nav-right{clip-path:polygon(70% 20%, 100% 0, 100% 100%, 70% 80%);}
+
+/* 触控板激活（点击）状态 */
+.trackpad-center:active,.trackpad-nav:active{background:rgba(255,255,255,.3)}
+
+/* 导航区域白色背景装饰条 */
+.nav-buttons::after{content:"";position:absolute;left:50%;transform:translate(-50%,-50%);bottom:-23px;width:330px;height:43px;background:linear-gradient(180deg,#ffffff,#ffffff);border-radius:3px;border:1px solid #d0d1d3;z-index:-1}
+
+/* 键盘主容器 */
+#keyboard-area{position:absolute;bottom:-5px;left:0px;width:333px;height:160px}
+
+/* 键盘背景层 */
+#keyboard-bg{position:absolute;inset:0;left:0px;width:333px;height:150px;border-radius:3px;background:linear-gradient(180deg,#ffffff,#e5e6e8);z-index:1}
+
+/* 键盘按键层 */
+.keyboard{position:absolute;inset:2px;z-index:2}
+
+/* 前三行按键行样式 */
+.key-row.row-1,.key-row.row-2,.key-row.row-3{display:flex;justify-content:center;align-items:center;gap:1px;margin-left:0;margin-bottom:2px}
+
+/* 前三行单个按键样式 */
+.key-row.row-1 .key,.key-row.row-2 .key,.key-row.row-3 .key{flex:1;height:32px;min-width:32px;box-sizing:border-box}
+
+/* 前三行特殊功能键样式 */
+.key-row.row-1 .key-special,.key-row.row-2 .key-special,.key-row.row-3 .key-special{flex:1}
+
+/* 第四行按键行样式 */
+.key-row.row-4{display:flex;justify-content:center;align-items:center;gap:2px}
+
+/* 第四行第一个按键（左上箭头） */
+.key-row.row-4 .key:nth-child(1){width:32px;height:32px;border-radius:0 0 0px 20px}
+
+/* 第四行第二个按键（麦克风） */
+.key-row.row-4 .key:nth-child(2){width:50px;height:32px}
+
+/* 第四行第三个按键（空格） */
+.key-row.row-4 .key.key-space:nth-child(3){width:120px;height:32px}
+
+/* 第四行第四个按键（符号） */
+.key-row.row-4 .key.key-space:nth-child(4){width:50px;height:32px}
+
+/* 第四行第五个按键（右上箭头） */
+.key-row.row-4 .key:nth-child(5){width:32px;height:32px;border-radius:0 0 20px 0px}
+
+/* 通用按键基础样式 */
+.key{position:relative;min-width:30px;height:32px;background:linear-gradient(180deg,#fafbfc,#e8e9eb);border:1px solid #c5c7ca;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#2c2c2c;box-shadow:0 2px 3px rgba(0,0,0,.08);cursor:pointer;user-select:none}
+
+/* 按键按下状态 */
+.key:active{background:linear-gradient(180deg,#e0e1e3,#d2d3d5);box-shadow:inset 0 1px 2px rgba(0,0,0,.15)}
+
+/* 按键右上角符号样式 */
+.key-symbol{font-size:9px;color:#666;position:absolute;top:3px;right:4px}
+
+/* 特殊功能键样式 */
+.key-special{font-size:10px;min-width:35px}
+
+/* 空格键样式 */
+.key-space{min-width:40px}
+
+/* 第一行按键间距 */
+.row-1{gap:3px}
+
+/* 第二行按键间距 */
+.row-2{gap:3px}
+
+/* 第三行按键间距 */
+.row-3{gap:3px}
+
+/* 第四行按键间距 */
+.row-4{gap:4px}
+
+/* 电池图标外框 */
+.battery-icon{position:relative;top:2px;left:2px;width:26px;height:14px;border:1px solid #fff;border-radius:1px;margin-right:4px;animation:battery-glow 2s infinite alternate ease-in-out;box-sizing:border-box;z-index:1}
+
+/* 电池正极头部 */
+.battery-icon::after{content:"";position:absolute;right:-4px;top:3px;width:3px;height:6px;background:#fff;border-radius:1px}
+
+/* 电池电量条 */
+.battery-level{height:100%;background:#fff;width:50%;border-radius:0px;transition:width .3s ease}
+
+/* 电池百分比文字 */
+.battery-text{position:relative;top:18px;left:-35px;color:#fff;font-size:12px;font-weight:500;text-shadow:0 0 3px rgba(0,0,0,.6);z-index:1}
+
+/* 设置页面容器 */
+.settings-page{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;color:#000;z-index:10;display:none;overflow-y:auto;padding:35px 15px 15px 15px;scrollbar-width:none}.settings-page::-webkit-scrollbar{display:none}.settings-title{font-size:16px;font-weight:bold;margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:5px}.settings-section{margin-bottom:20px}.section-title{font-size:12px;font-weight:bold;margin-bottom:8px;color:#333;background:#f0f0f0;padding:4px;border-radius:4px}.preview-box{width:100%;height:80px;background:#eee;border:1px dashed #999;margin-bottom:5px;display:flex;align-items:center;justify-content:center;color:#666;font-size:10px;overflow:hidden;background-size:cover;background-position:center}.preview-box-icon{width:48px;height:48px;border-radius:10px;background-size:cover;background-position:center;border:1px solid #ccc}.file-btn{display:block;width:100%;font-size:10px;margin-bottom:3px}.url-input{width:100%;border:1px solid #ccc;font-size:10px;padding:3px;margin-bottom:3px;border-radius:3px}.reset-btn,.fetch-btn{width:100%;background:#333;color:#fff;border:none;padding:4px;font-size:10px;border-radius:3px;cursor:pointer}.grid-2-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid-item{display:flex;flex-direction:column;gap:2px}.item-label{font-size:11px;font-weight:bold;margin-bottom:2px}.save-btn{width:100%;padding:12px;background:#000;color:#fff;border:none;border-radius:5px;margin-top:20px;font-weight:bold;cursor:pointer;font-size:12px;text-align:center}.save-btn:active{background:#333}
+
+/* 弹窗 */
+.custom-alert{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;background:#fff;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.5);z-index:20;display:none;font-size:12px;text-align:center;padding-top:10px}.alert-message{padding:10px;color:#000}.alert-buttons{display:flex;width:100%}.alert-button{flex:1;padding:8px 0;background:#f0f0f0;border:none;border-top:1px solid #ccc;color:#000;font-weight:bold;cursor:pointer}.alert-button:first-child{border-radius:0 0 0 8px;border-right:1px solid #ccc}.alert-button:last-child{border-radius:0 0 8px 0}.msg-view{position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:15;display:none;flex-direction:column}.msg-header{height:45px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;padding:0 15px;font-size:15px;font-weight:bold;background:#f9f9f9;color:#333}.chat-room-title-overlay{position: relative; top: -7px;left: -12px;background:rgba(255,255,255,0.7);color:#000;padding:4px 8px;border-radius:2px;font-size:14px;font-weight:bold}.msg-body{flex:1;overflow-y:auto;padding:0}.msg-tabs{height:45px;display:flex;border-top:1px solid #eee;background:#fff}.msg-tab{flex:1;display:flex;justify-content:center;align-items:center;font-size:13px;color:#999;cursor:pointer;border-top:2px solid transparent}.msg-tab.active{color:#000;font-weight:bold;border-top:2px solid #000}.friend-item{position:relative;overflow:hidden;border-bottom:1px solid #f5f5f5;background:#fff;height:65px}.friend-content{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;padding:0 15px;gap:12px;background:#fff;z-index:2;transition:transform .2s ease}.friend-item:active .friend-content{background:#f5f5f5}.friend-delete-btn{position:absolute;top:0;right:0;height:100%;width:80px;display:flex;align-items:center;justify-content:center;z-index:1}.friend-delete-inner{background:#ff4d4f;color:#fff;padding:8px 16px;border-radius:10px;font-size:12px;font-weight:bold;box-shadow:0 2px 5px rgba(255,77,79,0.3)}.friend-avatar{width:42px;height:42px;border-radius:50%;background-size:cover;background-position:center;background-color:#eee;border:1px solid #ddd;flex-shrink:0}.friend-info{flex:1;min-width:0}.friend-name{font-size:14px;font-weight:600;margin-bottom:2px}.friend-desc{font-size:11px;color:#888;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.msg-editor{display:none;padding:15px 25px;flex-direction:column;align-items:center;gap:10px;height:100%;background:#fff;overflow-y:auto}.editor-avatar{width:60px;height:60px;min-width:60px;min-height:60px;flex-shrink:0;border-radius:50%;background:#f0f0f0;margin-top:0;background-size:cover;background-position:center;border:2px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#999;cursor:pointer}.editor-input{width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:#fafafa}.editor-area{height:200px;resize:vertical;line-height:1.4;min-height:100px;width:100%}.icon-btn{cursor:pointer;padding:5px 8px;font-size:16px;color:#333}.empty-tip{text-align:center;color:#999;margin-top:50px;font-size:12px}/* 世界书样式 */.wb-group-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f5f5f5;border-radius:6px;margin-bottom:5px;font-weight:600;cursor:pointer}.wb-group-content{padding:0 0 0 15px;max-height:0;overflow:hidden;transition:max-height 0.3s ease-out}.wb-group-content.expanded{max-height:1000px}.wb-item{display:flex;align-items:center;justify-content:space-between;padding:8px 5px;border-bottom:1px solid #eee;cursor:pointer;position:relative}.wb-item:hover{background:#f9f9f9}.wb-item-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}.wb-item-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wb-item-order input{width:40px;text-align:center;border:1px solid #ccc;border-radius:3px;font-size:11px;padding:2px;}.wb-item-select{width:20px;height:20px;border:2px solid #ccc;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;background:#fff;margin-right:5px}.wb-item.selected .wb-item-select{background:#007bff;border-color:#007bff}.wb-item-drag-handle{cursor:grab;margin-right:10px;color:#888}.wb-item-drag-handle:active{cursor:grabbing}
+
+</style>
+</head>
+<body>
+<!-- 手机整体容器开始 -->
+<div class="phone">
+
+<!-- 手机顶部装饰区域 -->
+<div class="phone-top"><div class="speaker"></div><div class="decor-dot"></div><div class="camera-front"></div><div class="brand">LEPhone</div></div>
+
+<!-- 屏幕显示区域 -->
+<div class="screen"><div class="wallpaper" id="screen-background"></div><div class="status-bar"><div class="status-left"><div class="battery-icon"><div class="battery-level" id="battery-fill"></div></div><span class="battery-text" id="battery-text">94%</span></div><div class="status-right" id="status-right-icons"></div></div><div class="lockscreen-time" id="lockscreen-content"><div class="time" id="time">10:27</div><div class="date"><span class="period">下午</span><span class="fulldate"> 2月28日 周二</span></div></div><div class="homescreen" id="homescreen-content"><div class="app-dock"><div class="app-icon" data-app="settings"><div class="app-icon-frame"><i class="fa-solid fa-gear"></i></div><span class="app-label">设置</span></div><div class="app-icon" data-app="browser"><div class="app-icon-frame"><i class="fa-solid fa-globe"></i></div><span class="app-label">世界书</span></div><div class="app-icon" data-app="messages"><div class="app-icon-frame"><i class="fa-solid fa-envelope"></i></div><span class="app-label">短信</span></div><div class="app-icon" data-app="notes"><div class="app-icon-frame"><i class="fa-solid fa-clipboard"></i></div><span class="app-label">备忘录</span></div></div></div><div class="custom-alert" id="custom-alert-box"><div class="alert-message" id="alert-message"></div><div class="alert-buttons"><button class="alert-button alert-button-left" id="alert-cancel" style="display:none">取消</button><button class="alert-button alert-button-right" id="alert-button">确定</button></div></div>
+
+<!-- 相机个性化设置 -->
+<div class="settings-page" id="settings-page"><div class="settings-title">个性化设置</div><div class="settings-section"><div class="section-title">锁屏壁纸</div><div class="preview-box" id="prev-lock">预览</div><input type="file" class="file-btn"><button class="reset-btn">恢复默认</button></div><div class="settings-section"><div class="section-title">主页壁纸</div><div class="preview-box" id="prev-home">预览</div><input type="file" class="file-btn"><button class="reset-btn">恢复默认</button></div><div class="settings-section"><div class="section-title">按钮样式</div><div class="grid-2-col"><div class="grid-item"><div class="item-label">设置</div><div class="preview-box preview-box-icon"></div><input type="file" class="file-btn"><input type="text" class="url-input" placeholder="URL链接"></div><div class="grid-item"><div class="item-label">世界书</div><div class="preview-box preview-box-icon"></div><input type="file" class="file-btn"><input type="text" class="url-input" placeholder="URL链接"></div><div class="grid-item"><div class="item-label">短信</div><div class="preview-box preview-box-icon"></div><input type="file" class="file-btn"><input type="text" class="url-input" placeholder="URL链接"></div><div class="grid-item"><div class="item-label">备忘录</div><div class="preview-box preview-box-icon"></div><input type="file" class="file-btn"><input type="text" class="url-input" placeholder="URL链接"></div></div><button class="save-btn" id="save-settings">保存当前设置</button></div></div>
+
+<!-- api设置 -->
+<div class="settings-page" id="app-settings-view" style="display:none;z-index:15"><div class="settings-title">系统设置</div><div class="settings-section"><div class="section-title">配置管理</div><select id="cfg-select" class="url-input" style="height:25px;background:#fff;margin-bottom:5px"><option value="new">-- 新建配置 --</option></select></div><div class="settings-section"><div class="section-title">API 连接配置</div><div class="item-label">API 地址 (Base URL)</div><input type="text" id="cfg-url" class="url-input" placeholder="https://api.openai.com/v1"><div class="item-label">API 密钥</div><input type="password" id="cfg-key" class="url-input" placeholder="sk-..."></div><div class="settings-section"><div class="section-title">模型选择</div><div style="display:flex;gap:5px;align-items:center"><select id="cfg-model" class="url-input" style="flex:1;height:25px;background:#fff"></select><button id="btn-fetch" class="fetch-btn" style="width:50px">拉取</button></div></div><div class="settings-section"><div class="section-title">参数设置</div><div class="item-label">温度 (Temperature): <span id="cfg-temp-val">0.7</span></div><input type="range" id="cfg-temp" min="0" max="2" step="0.1" value="0.7" style="width:100%;margin-top:5px"></div><button class="save-btn" id="btn-save-cfg">保存并退出</button></div>
+
+<!-- 短信 -->
+<div class="msg-view" id="msg-app-view"><div class="msg-header"><span id="msg-title">聊天</span><div id="msg-header-icons"></div></div><div class="msg-body" id="msg-body-chats"><div class="empty-tip">暂无聊天记录</div></div><div class="msg-body" id="msg-body-friends" style="display:none"></div><div class="msg-editor" id="msg-editor"><div class="editor-avatar" id="editor-avatar"><i class="fa-solid fa-camera"></i></div><input type="file" id="editor-file" style="display:none"><div style="width:100%;display:flex;flex-direction:column;gap:5px"><div class="item-label" style="font-size:14px">名字</div><input class="editor-input" id="editor-name"><div class="item-label" style="font-size:14px;margin-top:5px">角色人设</div><textarea class="editor-input editor-area" id="editor-setting" style="flex:1"></textarea><button class="save-btn" id="editor-save" style="margin-top:10px">保存</button><button class="save-btn" id="editor-download" style="background:#555;margin-top:5px;display:none">下载角色卡 (PNG)</button></div></div><div class="msg-tabs" id="msg-tabs-bar"><div class="msg-tab active" data-tab="chats">聊天</div><div class="msg-tab" data-tab="friends">好友</div></div><input type="file" id="import-file" multiple style="display:none"><div class="chat-room" id="chat-room-view"><div class="msg-header"><span id="chat-room-title"><div class="chat-room-title-overlay">聊天中</div></span></div><div class="chat-list" id="chat-history-list"></div><div class="chat-input-bar" id="chat-input-area"><input type="text" id="chat-real-input" class="chat-input-fake" placeholder="点击输入"></div></div><div class="msg-settings-view" id="msg-settings-view"><div class="msg-set-header"><span>聊天设置</span><span id="msg-set-save" style="color:#007bff;cursor:pointer">保存</span></div><div class="msg-set-body"><div class="msg-set-row"><div class="msg-set-label">API 配置</div><select id="chat-api-select" class="msg-set-input"><option value="">默认配置</option></select></div><div class="msg-set-row"><div class="msg-set-label">世界书 (Worldbook)</div><select class="msg-set-input"><option>-- 预留接口 --</option></select></div><div class="msg-set-row" id="msg-set-user-section"><div class="msg-set-label">用户人设</div><div class="user-avatar-upload" id="user-avatar-preview"><i class="fa-solid fa-user"></i></div><input type="file" id="user-avatar-file" style="display:none"><input type="text" id="user-name-input" class="msg-set-input" placeholder="我的名字" style="margin-bottom:5px;text-align:center"><textarea id="user-desc-input" class="msg-set-input" rows="3" placeholder="用户人设描述..."></textarea></div><div class="msg-set-row"><div class="msg-set-label">聊天壁纸</div><button class="fetch-btn" onclick="document.getElementById('chat-bg-file').click()">上传图片</button><input type="file" id="chat-bg-file" style="display:none" class="file-btn"><div class="preview-wall" id="chat-bg-preview"></div></div><button class="red-btn" id="btn-clear-chats">清空所有聊天记录</button></div></div></div>
+
+<!-- 世界书 -->
+<div class="msg-view" id="wb-app-view" style="display:none"><div class="msg-header"><span id="wb-title">世界书</span><div id="wb-header-icons"></div></div><div class="msg-body" id="wb-body" style="padding:15px;display:flex;flex-direction:column;gap:10px;font-size:13px;color:#333;overflow-y:auto"></div><div class="wb-editor" id="wb-editor" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#fff;z-index:20;display:none;flex-direction:column;padding:15px"><div style="font-weight:bold;margin-bottom:15px">编辑世界书项目</div><div class="item-label">名字</div><input class="editor-input" id="wb-editor-name" style="margin-bottom:10px"><div class="item-label">内容</div><textarea class="editor-input editor-area" id="wb-editor-content" rows="10" style="margin-bottom:20px;flex:1"></textarea><button class="save-btn" id="wb-editor-save">保存</button></div><div class="wb-multiselect-bar" id="wb-multiselect-bar" style="height:45px;border-top:1px solid #eee;display:none;background:#f9f9f9"><div style="display:flex;justify-content:space-between;align-items:center;height:100%;padding:0 15px;font-size:12px;font-weight:bold"><span id="wb-select-cancel" style="cursor:pointer">取消</span><span id="wb-select-all" style="cursor:pointer">全选</span><span id="wb-select-move" style="cursor:pointer">移动</span><span id="wb-select-delete" style="cursor:pointer;color:#d9534f">删除</span></div></div><input type="file" id="wb-import-file" style="display:none" accept=".json"></div><div class="msg-view" id="note-app-view" style="display:none"><div class="msg-header"><span>备忘录</span></div><div class="msg-body" id="note-body" style="padding:15px;overflow-y:auto"></div></div><div class="camera-shortcut"><i class="fa-solid fa-camera"></i></div></div>
+
+<!-- 导航按钮区域 -->
+<div class="nav-buttons"><div class="nav-group left"><div class="nav-btn"><i class="fa-solid fa-face-laugh"></i></div><div class="nav-btn" id="btn-menu">☰</div></div><div class="trackpad" id="trackpad"><div class="trackpad-center"></div><div class="trackpad-nav nav-up"></div><div class="trackpad-nav nav-down"></div><div class="trackpad-nav nav-left"></div><div class="trackpad-nav nav-right"></div></div><div class="nav-group right"><div class="nav-btn" id="back-btn">↩</div><div class="nav-btn" id="aiChatBtn"><i class="fa-solid fa-comment"></i></div></div></div>
+
+<!-- 物理键盘区域 -->
+<div id="keyboard-area"><div id="keyboard-bg"></div><div class="keyboard"><div class="key-row row-1"><div class="key">Q<span class="key-symbol">1</span></div><div class="key">W<span class="key-symbol">2</span></div><div class="key">E<span class="key-symbol">3</span></div><div class="key">R<span class="key-symbol">4</span></div><div class="key">T<span class="key-symbol">5</span></div><div class="key">Y<span class="key-symbol">6</span></div><div class="key">U<span class="key-symbol">7</span></div><div class="key">I<span class="key-symbol">8</span></div><div class="key">O<span class="key-symbol">9</span></div><div class="key">P<span class="key-symbol">0</span></div></div><div class="key-row row-2"><div class="key">A<span class="key-symbol">*</span></div><div class="key">S<span class="key-symbol">#</span></div><div class="key">D<span class="key-symbol">+</span></div><div class="key">F<span class="key-symbol">-</span></div><div class="key">G<span class="key-symbol">=</span></div><div class="key">H<span class="key-symbol">(</span></div><div class="key">J<span class="key-symbol">)</span></div><div class="key">K<span class="key-symbol">:</span></div><div class="key">L<span class="key-symbol">;</span></div><div class="key key-special">⌫</div></div><div class="key-row row-3"><div class="key key-special">alt</div><div class="key">Z<span class="key-symbol">!</span></div><div class="key">X<span class="key-symbol">@</span></div><div class="key">C<span class="key-symbol">/</span></div><div class="key">V<span class="key-symbol">,</span></div><div class="key">B<span class="key-symbol">.</span></div><div class="key">N<span class="key-symbol">?</span></div><div class="key">M<span class="key-symbol">'</span></div><div class="key key-special">$<span class="key-symbol"><i class="fa-solid fa-volume-high"></i></span></div><div class="key key-special">↩</div></div><div class="key-row row-4"><div class="key key-special">↑</div><div class="key key-special"><i class="fa-solid fa-microphone"></i></div><div class="key key-space">␣</div><div class="key key-space">sym</div><div class="key key-special">↑</div></div></div></div></div>
+<script>
+/* 更新时间和日期显示 */
+function updateTime(){const now=new Date();const hours=now.getHours();const minutes=now.getMinutes().toString().padStart(2,'0');const ampm=hours<12?'上午':'下午';const displayHours=hours%12||12;document.getElementById('time').textContent=displayHours+':'+minutes;const month=now.getMonth()+1;const day=now.getDate();const weekdays=['日','一','二','三','四','五','六'];const weekday=weekdays[now.getDay()];document.querySelector('.date').innerHTML=`<span class="period">${ampm}</span><span class="fulldate"> ${month}月${day}日 周${weekday}</span>`}
+
+/* 初始化时间并每秒更新 */
+updateTime();setInterval(updateTime,1000);
+
+/* 自定义 Alert 弹窗函数 */
+function showCustomAlert(message,isConfirm=false){return new Promise((resolve)=>{const alertBox=document.getElementById('custom-alert-box');const cancelBtn=document.getElementById('alert-cancel');const confirmBtn=document.getElementById('alert-button');document.getElementById('alert-message').textContent=message;alertBox.style.display='block';if(isConfirm){cancelBtn.style.display='inline-block';cancelBtn.onclick=function(){alertBox.style.display='none';cancelBtn.style.display='none';resolve(false)};confirmBtn.onclick=function(){alertBox.style.display='none';cancelBtn.style.display='none';resolve(true)}}else{cancelBtn.style.display='none';confirmBtn.onclick=function(){alertBox.style.display='none';resolve(true)}}})}
+
+/* 更新电池显示（百分比和进度条） */
+function updateBatteryDisplay(level){const percent=Math.round(level*100);const fill=document.getElementById("battery-fill");const text=document.getElementById("battery-text");fill.style.width=percent+"%";text.textContent=percent+"%"}
+
+/* 使用浏览器电池API获取实时电量 */
+if(navigator.getBattery){navigator.getBattery().then(battery=>{updateBatteryDisplay(battery.level);battery.addEventListener("levelchange",()=>updateBatteryDisplay(battery.level))})}else{updateBatteryDisplay(0.94)}
+
+/* 页面状态切换函数 */
+let isLocked=true;const lockscreen=document.getElementById('lockscreen-content');const homescreen=document.getElementById('homescreen-content');const cameraShortcut=document.querySelector('.camera-shortcut');const settingsPage=document.getElementById('settings-page');
+
+/* 默认图片URL和应用列表 */
+const defBg='https://iili.io/fovI1aV.png';const appMap=['settings','browser','messages','notes'];
+
+/* 存储当前激活的壁纸路径（可能为 DataURL 或默认 URL） */
+let currentLockBg=defBg;let currentHomeBg=defBg;
+
+/* 切换到主屏幕 */
+function switchToHomescreen(){isLocked=false;document.getElementById('screen-background').style.backgroundImage=`url(${currentHomeBg})`;lockscreen.style.display='none';homescreen.style.display='block';cameraShortcut.style.display='none';settingsPage.style.display='none';}
+
+/* 切换到锁屏 */
+function switchToLockscreen(){isLocked=true;document.getElementById('screen-background').style.backgroundImage=`url(${currentLockBg})`;lockscreen.style.display='block';homescreen.style.display='none';cameraShortcut.style.display='flex';settingsPage.style.display='none';}
+
+/* 相机按钮点击打开设置 */
+cameraShortcut.addEventListener('click',function(){settingsPage.style.display='block';cameraShortcut.style.display='none'});
+
+/* 图片预览和 IndexedDB 存储功能逻辑 */
+const fileInputs=document.querySelectorAll('.file-btn');const urlInputs=document.querySelectorAll('.url-input');const resetBtns=document.querySelectorAll('.reset-btn');const previewBoxes=document.querySelectorAll('.preview-box, .preview-box-icon');const appIconFrames=document.querySelectorAll('.app-dock .app-icon-frame');const appIconPreviews=document.querySelectorAll('.preview-box-icon');
+
+/* 将 DataURL 存入 IndexedDB */
+async function saveToIDB(key,value){try{await localforage.setItem(key,value);}catch(err){showCustomAlert('保存设置失败: '+err.message);}}
+
+/* 应用单个壁纸或图标 */
+function applySetting(key,url,isInitialLoad=false){if(key==='lock-bg'){currentLockBg=url;if(isLocked||isInitialLoad){document.getElementById('screen-background').style.backgroundImage=`url(${url})`;}const preview=document.getElementById('prev-lock');if(preview){preview.style.backgroundImage=`url(${url})`;preview.innerHTML=''}}else if(key==='home-bg'){currentHomeBg=url;if(!isLocked||isInitialLoad){document.getElementById('screen-background').style.backgroundImage=`url(${url})`;}const preview=document.getElementById('prev-home');if(preview){preview.style.backgroundImage=`url(${url})`;preview.innerHTML=''}}else if(key.startsWith('app-')){const appName=key.replace('app-','');const appIndex=appMap.indexOf(appName);if(appIndex!==-1){const target=appIconFrames[appIndex];const preview=appIconPreviews[appIndex];if(target){target.style.backgroundImage=`url(${url})`;target.style.backgroundSize='cover';target.innerHTML=''}if(preview){preview.style.backgroundImage=`url(${url})`;preview.style.backgroundSize='cover';preview.innerHTML=''}}}}
+
+/* 文件输入事件监听器 */
+fileInputs.forEach((input,idx)=>{input.addEventListener('change',e=>{const file=e.target.files[0];if(file){const reader=new FileReader();reader.onload=evt=>{const res=evt.target.result;const key=idx<2?(idx===0?'lock-bg':'home-bg'):('app-'+appMap[idx-2]);applySetting(key,res);saveToIDB(key,res);};reader.readAsDataURL(file);}});});
+
+/* URL 输入事件监听器 */
+urlInputs.forEach((input,idx)=>{input.addEventListener('input',e=>{const url=e.target.value.trim();const key='app-'+appMap[idx];applySetting(key,url);saveToIDB(key,url);});});
+
+/* 恢复默认按钮事件监听器 */
+resetBtns.forEach((btn,idx)=>{btn.addEventListener('click',async()=>{const key=idx<2?(idx===0?'lock-bg':'home-bg'):('app-'+appMap[idx-2]);const defaultUrl=idx<2?defBg:null;try{await localforage.removeItem(key);if(defaultUrl){applySetting(key,defaultUrl);}else{const appIndex=idx-2;const target=appIconFrames[appIndex];const preview=appIconPreviews[appIndex];if(target){target.style.backgroundImage='';target.innerHTML=target.getAttribute('data-default-icon')||'<i class="fa-solid fa-question"></i>'}if(preview){preview.style.backgroundImage='';preview.innerHTML='预览'}
+
+/* 重新应用默认图标（从HTML中读取或硬编码） */
+const defaultIconHtml=document.querySelector(`.app-icon[data-app="${appMap[appIndex]}"] i`).outerHTML;if(target){target.innerHTML=defaultIconHtml;}applySetting(key,null);}showCustomAlert('已恢复默认设置！');}catch(err){showCustomAlert('恢复默认失败: '+err.message);}});});
+
+/* 保存按钮简单反馈 */
+document.getElementById('save-settings').addEventListener('click',function(){showCustomAlert('设置已保存！');settingsPage.style.display='none';if(isLocked){cameraShortcut.style.display='flex'}else{switchToHomescreen()}});
+
+/* 触控板逻辑：包含点击和长按滚动 */
+const trackpadCenter=document.querySelector('.trackpad-center');const trackpadNavs=document.querySelectorAll('.trackpad-nav');let scrollInterval;function getScrollTarget(){const msgEditor=document.getElementById('msg-editor');const chatRoom=document.getElementById('chat-room-view');const msgBodyChats=document.getElementById('msg-body-chats');const msgBodyFriends=document.getElementById('msg-body-friends');const wbBody=document.getElementById('wb-body');if(settingsPage.style.display==='block')return settingsPage;if(appSettingsView.style.display==='block')return appSettingsView;if(msgEditor.style.display==='flex')return msgEditor;if(wbAppView.style.display==='flex'&&wbEditor.style.display==='none'){return wbBody.scrollHeight > wbBody.clientHeight ? wbBody : null}if(chatRoom.style.display==='flex'){const chatList=document.getElementById('chat-history-list');return chatList.scrollHeight > chatList.clientHeight ? chatList : null;}if(document.getElementById('note-app-view').style.display==='flex')return document.getElementById('note-body');if(document.getElementById('msg-app-view').style.display==='flex'){if(msgBodyChats.style.display==='block')return msgBodyChats;if(msgBodyFriends.style.display==='block')return msgBodyFriends;}return null}function startScroll(direction){stopScroll();const target=getScrollTarget();if(target){scrollInterval=setInterval(()=>{target.scrollBy(0,direction*20)},30)}}function stopScroll(){if(scrollInterval){clearInterval(scrollInterval);scrollInterval=null}}
+
+// 触控板事件绑定
+trackpadNavs.forEach(nav=>{nav.addEventListener('mousedown',e=>{if(getScrollTarget()){if(e.target.classList.contains('nav-up'))startScroll(-1);if(e.target.classList.contains('nav-down'))startScroll(1)}});nav.addEventListener('touchstart',e=>{if(getScrollTarget()){e.preventDefault();if(e.target.classList.contains('nav-up'))startScroll(-1);if(e.target.classList.contains('nav-down'))startScroll(1)}});
+
+// 鼠标/触摸松开停止滚动
+nav.addEventListener('mouseup',stopScroll);nav.addEventListener('mouseleave',stopScroll);nav.addEventListener('touchend',stopScroll);
+
+// 原有的点击逻辑
+nav.addEventListener('click',e=>{if(getScrollTarget()) return;if(isLocked){switchToHomescreen()}else{console.log('Nav Clicked', e.target.className)}});});
+
+// 触控板中心点击逻辑：解锁或切换聊天输入框
+trackpadCenter.addEventListener('click',function(){if(isLocked){switchToHomescreen()}else{const chatView = document.getElementById('chat-room-view');const inputArea = document.getElementById('chat-input-area');const chatList = document.getElementById('chat-history-list');const realInput = document.getElementById('chat-real-input');if(chatView.style.display === 'flex'){if(inputArea.style.display === 'block'){inputArea.style.display = 'none';realInput.blur();} else {inputArea.style.display = 'block';realInput.focus();setTimeout(()=> chatList.scrollTop = chatList.scrollHeight, 50);}}else{console.log('Center Trackpad Clicked')}}});
+
+// 菜单键逻辑 - 只在聊天室中打开当前会话设置
+document.getElementById('btn-menu').addEventListener('click',async()=>{if(msgAppView.style.display==='flex'&&currentChatSession){openMsgSettings();}});
+
+/* 顶部状态栏添加锁屏/主页切换演示 */
+document.querySelector('.battery-text').addEventListener('click',function(){if(isLocked){switchToHomescreen()}else{switchToLockscreen()}});
+
+/* 返回按钮：关闭设置、退出聊天室或返回锁屏 */
+document.getElementById('back-btn').addEventListener('click',function(){const appSettings=document.getElementById('app-settings-view');const msgApp=document.getElementById('msg-app-view');const wbApp=document.getElementById('wb-app-view');const msgEditor=document.getElementById('msg-editor');const chatRoom=document.getElementById('chat-room-view');const msgSettings=document.getElementById('msg-settings-view');const inputArea=document.getElementById('chat-input-area');const realInput=document.getElementById('chat-real-input');
+
+// 优先级 0: 聊天室输入框显示时，点击发送
+if(chatRoom.style.display==='flex' && inputArea.style.display==='block'){sendMessage(realInput.value.trim());return;}
+// 优先级 1: 世界书应用
+if(wbApp.style.display==='flex'){if(isWbMultiSelectMode){toggleWbMultiSelectMode(false);return;}if(wbEditor.style.display==='flex'){wbEditor.style.display='none';return;}wbApp.style.display='none';switchToHomescreen();return;}
+// 优先级 2: 通用设置页
+if(settingsPage.style.display==='block'){settingsPage.style.display='none';if(isLocked){cameraShortcut.style.display='flex'}else{switchToHomescreen()}}
+// 优先级 3: 系统设置页
+else if(appSettings.style.display==='block'){appSettings.style.display='none';switchToHomescreen()}
+// 优先级 3.5: 备忘录应用
+else if(document.getElementById('note-app-view').style.display==='flex'){document.getElementById('note-app-view').style.display='none';switchToHomescreen()}
+// 优先级 4: 短信应用
+else if(msgApp.style.display==='flex'){
+// 4a: 如果聊天设置开着，先关掉
+if(msgSettings.style.display==='flex'){msgSettings.style.display='none';return;}
+// 4b: 如果在聊天室内，退出到列表
+if(chatRoom.style.display==='flex'){chatRoom.style.display='none';currentChatSession=null;renderChatList();return;}
+// 4c: 如果在编辑器，关闭编辑器
+if(msgEditor.style.display==='flex'){closeMsgEditor();return;}
+// 4d: 退出短信APP
+msgApp.style.display='none';switchToHomescreen();}
+// 优先级 5: 返回锁屏
+else if(!isLocked){switchToLockscreen()}});document.getElementById('aiChatBtn').addEventListener('click',function(){if(!isLocked){openChatRoomFromHomescreen()}});
+
+/* 系统设置APP逻辑：API配置与模型拉取 */
+const appSettingsView=document.getElementById('app-settings-view');const cfgUrl=document.getElementById('cfg-url');const cfgKey=document.getElementById('cfg-key');const cfgModel=document.getElementById('cfg-model');const cfgTemp=document.getElementById('cfg-temp');const cfgTempVal=document.getElementById('cfg-temp-val');const cfgSelect=document.getElementById('cfg-select');let savedConfigs={};
+
+/* 配置下拉框切换逻辑 */
+cfgSelect.addEventListener('change',()=>{const val=cfgSelect.value;if(val==='new'){cfgUrl.value='';cfgKey.value='';cfgModel.innerHTML='';cfgTemp.value=0.7;cfgTempVal.textContent=0.7}else{const c=savedConfigs[val];if(c){cfgUrl.value=c.url||'';cfgKey.value=c.key||'';cfgTemp.value=c.temp||0.7;cfgTempVal.textContent=c.temp||0.7;cfgModel.innerHTML='';if(c.models){c.models.forEach(m=>{const opt=document.createElement('option');opt.value=m.id;opt.text=m.id;cfgModel.add(opt)})}else if(c.model){const opt=document.createElement('option');opt.value=c.model;opt.text=c.model;cfgModel.add(opt)}cfgModel.value=c.model}}});
+
+/* 点击Dock栏设置图标打开APP */
+document.querySelector('.app-icon[data-app="settings"]').addEventListener('click',async()=>{homescreen.style.display='none';appSettingsView.style.display='block';savedConfigs=await localforage.getItem('all_api_configs')||{};cfgSelect.innerHTML='<option value="new">-- 新建配置 --</option>';Object.keys(savedConfigs).forEach(k=>{const opt=document.createElement('option');opt.value=k;opt.text=k;cfgSelect.add(opt)});const data=await localforage.getItem('api_config');if(data){cfgUrl.value=data.url||'';cfgKey.value=data.key||'';cfgTemp.value=data.temp||0.7;cfgTempVal.textContent=data.temp||0.7;cfgModel.innerHTML='';if(data.models){data.models.forEach(m=>{const opt=document.createElement('option');opt.value=m.id;opt.text=m.id;cfgModel.add(opt)})}else if(data.model){const opt=document.createElement('option');opt.value=data.model;opt.text=data.model;cfgModel.add(opt)}cfgModel.value=data.model;if(data.url&&savedConfigs[data.url]){cfgSelect.value=data.url}}});
+
+/* 温度滑块实时显示 */
+cfgTemp.addEventListener('input',e=>{cfgTempVal.textContent=e.target.value});
+
+/* 拉取模型列表按钮逻辑 */
+document.getElementById('btn-fetch').addEventListener('click',async()=>{const url=cfgUrl.value.replace(/\/+$/,'');const key=cfgKey.value;if(!url||!key){showCustomAlert('请输入API地址和密钥');return}showCustomAlert('正在拉取模型...');try{const res=await fetch(url+'/models',{headers:{'Authorization':'Bearer '+key}});if(!res.ok)throw new Error('HTTP '+res.status);const data=await res.json();cfgModel.innerHTML='';const models=data.data||data.models||[];models.forEach(m=>{const opt=document.createElement('option');opt.value=m.id;opt.text=m.id;cfgModel.add(opt)});showCustomAlert('模型列表已更新')}catch(e){showCustomAlert('拉取失败: '+e.message)}});
+
+/* 保存配置按钮逻辑 */
+document.getElementById('btn-save-cfg').addEventListener('click',async()=>{const models=[];for(let i=0;i<cfgModel.options.length;i++){models.push({id:cfgModel.options[i].value})};const config={url:cfgUrl.value.trim(),key:cfgKey.value.trim(),model:cfgModel.value,temp:cfgTemp.value,models:models};const name=config.url;if(name){savedConfigs[name]=config;await localforage.setItem('all_api_configs',savedConfigs);}await localforage.setItem('api_config',config);showCustomAlert('配置已保存');appSettingsView.style.display='none';switchToHomescreen()});
+
+/* 使用 IndexedDB (localforage) 加载设置 */
+async function loadSettings(){const keys=['lock-bg','home-bg',...appMap.map(app=>'app-'+app)];for(const key of keys){const savedUrl=await localforage.getItem(key);let finalUrl;if(savedUrl){finalUrl=savedUrl;}else if(key==='lock-bg'||key==='home-bg'){finalUrl=defBg;}else{finalUrl=null;}if(finalUrl){applySetting(key,finalUrl,true);}}
+
+/* 在加载完所有设置后切换到锁屏（避免闪烁） */
+switchToLockscreen();}
+
+/* 短信APP逻辑 */
+const msgAppView=document.getElementById('msg-app-view');const msgTabs=document.querySelectorAll('.msg-tab');const msgBodyChats=document.getElementById('msg-body-chats');const msgBodyFriends=document.getElementById('msg-body-friends');const msgHeaderIcons=document.getElementById('msg-header-icons');const msgTitle=document.getElementById('msg-title');const msgEditor=document.getElementById('msg-editor');const msgTabsBar=document.getElementById('msg-tabs-bar');const editorAvatar=document.getElementById('editor-avatar');const editorFile=document.getElementById('editor-file');const editorName=document.getElementById('editor-name');const editorSetting=document.getElementById('editor-setting');const editorSave=document.getElementById('editor-save');const editorDownload=document.getElementById('editor-download');const importFile=document.getElementById('import-file');let currentMsgTab='chats';let editingFriendId=null;let tempAvatarData=null;
+
+/* 世界书APP逻辑 */
+const wbAppView=document.getElementById('wb-app-view');const wbBody=document.getElementById('wb-body');const wbHeaderIcons=document.getElementById('wb-header-icons');const wbEditor=document.getElementById('wb-editor');const wbEditorName=document.getElementById('wb-editor-name');const wbEditorContent=document.getElementById('wb-editor-content');const wbEditorSave=document.getElementById('wb-editor-save');const wbImportFile=document.getElementById('wb-import-file');const wbMultiselectBar=document.getElementById('wb-multiselect-bar');let editingWbId=null;let isWbMultiSelectMode=false;let wbSelectedItems=[];const WB_UNGROUPED_ID='_ungrouped';
+
+/* 打开世界书APP */
+document.querySelector('.app-icon[data-app="browser"]').addEventListener('click',()=>{homescreen.style.display='none';wbAppView.style.display='flex';renderWorldbookList();});
+
+/* 渲染世界书头部图标 */
+function renderWbHeader(isMultiSelect=false){wbMultiselectBar.style.display=isMultiSelect?'block':'none';if(isMultiSelect){document.getElementById('wb-select-cancel').onclick=()=>toggleWbMultiSelectMode(false);document.getElementById('wb-select-all').onclick=()=>selectAllWbItems();document.getElementById('wb-select-move').onclick=()=>openWbMoveDialog();document.getElementById('wb-select-delete').onclick=()=>deleteSelectedWbItems();}else{wbHeaderIcons.innerHTML='<i class="fa-solid fa-cloud-arrow-up icon-btn" id="btn-wb-upload" title="上传"></i><i class="fa-solid fa-cloud-arrow-down icon-btn" id="btn-wb-download" title="下载"></i><i class="fa-solid fa-book-medical icon-btn" id="btn-wb-add-item" title="添加世界书项目"></i><i class="fa-solid fa-layer-group icon-btn" id="btn-wb-add-group" title="添加世界书组"></i>';document.getElementById('btn-wb-upload').onclick=()=>wbImportFile.click();document.getElementById('btn-wb-download').onclick=()=>exportWorldbook();document.getElementById('btn-wb-add-item').onclick=()=>openWbEditor();document.getElementById('btn-wb-add-group').onclick=()=>openWbGroupDialog();}}
+
+/* 渲染世界书列表 */
+async function renderWorldbookList(){const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const expandedState=await localforage.getItem('wb_expanded')||{};wbBody.innerHTML='';renderWbHeader(isWbMultiSelectMode);const body=document.getElementById('wb-body');
+
+let dragEl=null;/* 辅助函数：渲染世界书项目 */
+function renderWbItem(item,groupId,isDragEnabled){const itemDiv=document.createElement('div');itemDiv.className=`wb-item ${item.id} ${wbSelectedItems.includes(item.id)?'selected':''}`;itemDiv.setAttribute('data-id',item.id);itemDiv.setAttribute('data-group',groupId);itemDiv.draggable=isDragEnabled;itemDiv.innerHTML=`<div class="wb-item-left"><i class="fa-solid fa-grip-vertical wb-item-drag-handle" style="${isDragEnabled?'':'display:none'}"></i><div class="wb-item-select" style="${isWbMultiSelectMode?'':'display:none'}"><i class="fa-solid fa-check"></i></div><div class="wb-item-name">${item.name}</div></div>`;itemDiv.addEventListener('click',e=>{if(!isWbMultiSelectMode&&e.target.className.indexOf('icon-btn')===-1&&e.target.tagName!=='INPUT'&&!e.target.classList.contains('wb-item-drag-handle'))return openWbEditor(item);if(isWbMultiSelectMode){toggleWbSelection(item.id,itemDiv)}});itemDiv.addEventListener('contextmenu',e=>{e.preventDefault();if(!isWbMultiSelectMode)toggleWbMultiSelectMode(true);toggleWbSelection(item.id,itemDiv)});if(isDragEnabled){itemDiv.addEventListener('dragstart',e=>{dragEl=itemDiv;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',item.id)});itemDiv.addEventListener('dragend',()=>dragEl=null);}body.appendChild(itemDiv);return itemDiv}
+
+/* 渲染分组 */
+for(const id in groups){const group=groups[id];const isExpanded=!!expandedState[id];const groupDiv=document.createElement('div');groupDiv.className='wb-group';groupDiv.setAttribute('data-id',id);groupDiv.innerHTML=`<div class="wb-group-header"><div style="display:flex;align-items:center;gap:10px"><i class="fa-solid fa-chevron-${isExpanded?'down':'right'}"></i><span>${group.name} (${group.items.length})</span></div></div><div class="wb-group-content ${isExpanded?'expanded':''}" style="max-height:${isExpanded?group.items.length*50+'px':'0px'}"></div>`;const header=groupDiv.querySelector('.wb-group-header');header.onclick=async()=>{expandedState[id]=!isExpanded;await localforage.setItem('wb_expanded',expandedState);renderWorldbookList()};header.addEventListener('contextmenu',async(e)=>{e.preventDefault();if(id!==WB_UNGROUPED_ID)openWbGroupDialog(id)});const content=groupDiv.querySelector('.wb-group-content');group.items.sort((a,b)=>(a.order||1)-(b.order||1));const dragEnabled=id!==WB_UNGROUPED_ID && isExpanded;group.items.forEach(item=>content.appendChild(renderWbItem(item,id,dragEnabled)));if(id!==WB_UNGROUPED_ID)content.addEventListener('dragover',e=>{e.preventDefault();const sb=document.getElementById('wb-body');const br=sb.getBoundingClientRect();if(e.clientY<br.top+50)sb.scrollTop-=10;else if(e.clientY>br.bottom-50)sb.scrollTop+=10;if(!dragEl)return;const itemOver=e.target.closest('.wb-item');if(itemOver&&itemOver!==dragEl){const rect=itemOver.getBoundingClientRect();const isAfter=(e.clientY-rect.top)>(rect.height/2);if(isAfter)content.insertBefore(dragEl,itemOver.nextSibling);else content.insertBefore(dragEl,itemOver)}});content.addEventListener('dragend',async()=>{const newOrder=[];const items=content.querySelectorAll('.wb-item');items.forEach((item,idx)=>{const wbItem=group.items.find(i=>i.id===item.getAttribute('data-id'));if(wbItem){wbItem.order=idx+1;newOrder.push(wbItem)}});group.items=newOrder;await localforage.setItem('worldbook_groups',groups);renderWorldbookList();});body.appendChild(groupDiv)}}
+
+/* 切换多选模式 */
+function toggleWbMultiSelectMode(enable){isWbMultiSelectMode=enable;wbSelectedItems=[];renderWorldbookList();if(!enable)document.querySelectorAll('.wb-item').forEach(i=>i.classList.remove('selected'))}
+
+/* 切换世界书项目选中状态 */
+function toggleWbSelection(id,element){if(wbSelectedItems.includes(id)){wbSelectedItems=wbSelectedItems.filter(i=>i!==id);element.classList.remove('selected');}else{wbSelectedItems.push(id);element.classList.add('selected');}}
+
+/* 全选世界书项目 */
+function selectAllWbItems(){wbSelectedItems=[];document.querySelectorAll('.wb-item').forEach(item=>{wbSelectedItems.push(item.getAttribute('data-id'));item.classList.add('selected');})}
+
+/* 删除选中的世界书项目 */
+async function deleteSelectedWbItems(){if(wbSelectedItems.length===0)return showCustomAlert('请选择要删除的项目！');if(await showCustomAlert(`确定删除选中的 ${wbSelectedItems.length} 个世界书项目吗？`,true)){let groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};for(const groupId in groups){groups[groupId].items=groups[groupId].items.filter(item=>!wbSelectedItems.includes(item.id))}await localforage.setItem('worldbook_groups',groups);toggleWbMultiSelectMode(false);renderWorldbookList();showCustomAlert('删除成功！')}}
+
+/* 打开移动对话框 */
+async function openWbMoveDialog(){if(wbSelectedItems.length===0)return showCustomAlert('请选择要移动的项目！');const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const existing=document.getElementById('wb-move-dialog');if(existing)existing.remove();const dlg=document.createElement('div');dlg.id='wb-move-dialog';dlg.style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;max-height:65%;overflow:auto;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:30;padding:12px;';dlg.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-weight:700">移动到组<span id="wm-close" style="cursor:pointer">✕</span></div><div id="wm-list"></div>';document.querySelector('.screen').appendChild(dlg);const list=dlg.querySelector('#wm-list');for(const id in groups){const d=document.createElement('div');d.style='display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;cursor:pointer';d.textContent=groups[id].name;d.onclick=async()=>{await moveWbItemsToGroup(id);dlg.remove()};list.appendChild(d)}document.getElementById('wm-close').onclick=()=>dlg.remove()}
+
+/* 移动选中的世界书项目到指定组 */
+async function moveWbItemsToGroup(targetGroupId){let groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const movedItems=[];for(const groupId in groups){groups[groupId].items=groups[groupId].items.filter(item=>{if(wbSelectedItems.includes(item.id)){movedItems.push(item);return false}return true})}groups[targetGroupId].items.push(...movedItems);await localforage.setItem('worldbook_groups',groups);toggleWbMultiSelectMode(false);renderWorldbookList();showCustomAlert(`成功移动 ${movedItems.length} 个项目到 ${groups[targetGroupId].name}！`)}
+
+/* 打开编辑世界书项目页 */
+function openWbEditor(item=null){wbEditor.style.display='flex';editingWbId=item?item.id:null;wbEditorName.value=item?item.name:'';wbEditorContent.value=item?item.content:'';}
+
+/* 保存世界书项目 */
+wbEditorSave.addEventListener('click',async()=>{if(!wbEditorName.value||!wbEditorContent.value)return showCustomAlert('名字和内容不能为空！');const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const item={id:editingWbId||Date.now().toString(),name:wbEditorName.value,content:wbEditorContent.value,order:1};let oldGroupId=WB_UNGROUPED_ID;
+
+/* 查找并移除旧版本 */
+for(const groupId in groups){const idx=groups[groupId].items.findIndex(i=>i.id===item.id);if(idx!==-1){item.order=groups[groupId].items[idx].order;groups[groupId].items.splice(idx,1);oldGroupId=groupId;break}}if(!editingWbId){item.id=Date.now().toString()}
+
+/* 添加新版本到旧组或未分组 */
+groups[oldGroupId].items.push(item);await localforage.setItem('worldbook_groups',groups);wbEditor.style.display='none';renderWorldbookList();showCustomAlert('世界书项目已保存！')});
+
+/* 打开创建/重命名组弹窗 */
+async function openWbGroupDialog(groupId=null){const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const isNew=!groupId;const existing=document.getElementById('wb-group-dialog');if(existing)existing.remove();const dlg=document.createElement('div');dlg.id='wb-group-dialog';dlg.style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:250px;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:30;padding:12px;';dlg.innerHTML=`<div style="font-weight:700;margin-bottom:10px">${isNew?'添加世界书组':'重命名世界书组'}</div><input type="text" id="wb-group-name-input" class="editor-input" value="${isNew?'':groups[groupId].name}" placeholder="组名"><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:15px"><button id="wb-group-cancel" style="padding:5px 10px;border:1px solid #ccc;background:#f0f0f0;border-radius:4px;cursor:pointer">取消</button><button id="wb-group-confirm" style="padding:5px 10px;border:none;background:#007bff;color:#fff;border-radius:4px;cursor:pointer">确认</button></div>`;document.querySelector('.screen').appendChild(dlg);document.getElementById('wb-group-cancel').onclick=()=>dlg.remove();document.getElementById('wb-group-confirm').onclick=async()=>{const name=document.getElementById('wb-group-name-input').value.trim();if(!name)return showCustomAlert('组名不能为空！');if(isNew){const newId=Date.now().toString();groups[newId]={name:name,items:[]};}else{groups[groupId].name=name;}await localforage.setItem('worldbook_groups',groups);dlg.remove();renderWorldbookList();};
+
+/* 添加删除按钮 */
+if(!isNew){const delBtn=document.createElement('button');delBtn.textContent='删除组';delBtn.style='padding:5px 10px;border:none;background:#d9534f;color:#fff;border-radius:4px;cursor:pointer;margin-right:auto';delBtn.onclick=async()=>{dlg.remove();if(await showCustomAlert(`确定删除组 "${groups[groupId].name}" 吗？组内的项目将移动到 "未分组"。`,true)){groups[WB_UNGROUPED_ID].items.push(...groups[groupId].items);delete groups[groupId];await localforage.setItem('worldbook_groups',groups);renderWorldbookList();}};dlg.querySelector('#wb-group-confirm').parentElement.prepend(delBtn)}}
+
+/* 导出世界书 */
+async function exportWorldbook(){const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const exportData={entries:{}};for(const id in groups){groups[id].items.forEach(item=>{exportData.entries[item.id]={content:item.content,comment:item.name,key:[item.name],group:id}})}const json=JSON.stringify(exportData,null,2);const blob=new Blob([json],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='Worldbook_Export.json';document.body.appendChild(a);a.click();document.body.removeChild(a);showCustomAlert('世界书已下载！')}
+
+/* 导入世界书 */
+wbImportFile.addEventListener('change',async(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=async(evt)=>{try{const groups=await localforage.getItem('worldbook_groups')||{'_ungrouped':{name:'未分组',items:[]}};const json=JSON.parse(evt.target.result);const fileName=file.name.replace('.json','');
+
+/* 创建新的分组（以导入文件名为组名） */
+const newGroupId=Date.now().toString();groups[newGroupId]={name:fileName,items:[]};let count=0;for(const key in json.entries){const entry=json.entries[key];const newItem={id:Date.now().toString()+Math.random().toString(),name:entry.comment||entry.key[0],content:entry.content,order:1};groups[newGroupId].items.push(newItem);count++}await localforage.setItem('worldbook_groups',groups);renderWorldbookList();showCustomAlert(`成功导入 ${count} 个项目到新组 "${fileName}"！`);}catch(err){showCustomAlert('导入失败: 文件格式错误或非JSON文件')}};reader.readAsText(file);wbImportFile.value=''});
+
+/* PNG元数据处理工具 (简易CRC32和Chunk写入) */
+const crcTable=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;crcTable[n]=c}function crc32(buf){let c=-1;for(let i=0;i<buf.length;i++)c=crcTable[(c^buf[i])&0xff]^(c>>>8);return(c^-1)>>>0}function writePngText(uint8Array,key,text){const keyArr=new TextEncoder().encode(key);const textArr=new TextEncoder().encode(text);const len=keyArr.length+1+textArr.length;const chunk=new Uint8Array(4+4+len+4);const view=new DataView(chunk.buffer);view.setUint32(0,len);chunk.set([116,69,88,116],4);chunk.set(keyArr,8);chunk[8+keyArr.length]=0;chunk.set(textArr,9+keyArr.length);const crcInput=chunk.slice(4,8+len);view.setUint32(8+len,crc32(crcInput));const endPos=uint8Array.length-12;const newPng=new Uint8Array(uint8Array.length+chunk.length);newPng.set(uint8Array.slice(0,endPos),0);newPng.set(chunk,endPos);newPng.set(uint8Array.slice(endPos),endPos+chunk.length);return newPng}function extractPngInfo(file){return new Promise(resolve=>{const reader=new FileReader();reader.onload=()=>{const view=new DataView(reader.result);let pos=8;while(pos<view.byteLength){const len=view.getUint32(pos);if(view.getUint32(pos+4)===1950701684){const u8=new Uint8Array(reader.result,pos+8,len);let i=0;while(i<len&&u8[i]!==0)i++;const key=new TextDecoder().decode(u8.slice(0,i));if(key==='chara'){try{const text=new TextDecoder().decode(u8.slice(i+1));const json=decodeURIComponent(escape(atob(text)));resolve(JSON.parse(json));return}catch(e){}}}pos+=len+12}resolve(null)};reader.readAsArrayBuffer(file)})}
+
+/* 打开短信APP */
+document.querySelector('.app-icon[data-app="messages"]').addEventListener('click',()=>{homescreen.style.display='none';msgAppView.style.display='flex';switchMsgTab('chats')});
+
+/* Tab切换逻辑 */
+msgTabs.forEach(tab=>{tab.addEventListener('click',()=>{const target=tab.getAttribute('data-tab');switchMsgTab(target)})});function switchMsgTab(tab){currentMsgTab=tab;msgTabs.forEach(t=>t.classList.toggle('active',t.getAttribute('data-tab')===tab));if(tab==='chats'){msgBodyChats.style.display='block';msgBodyFriends.style.display='none';msgTitle.textContent='聊天';renderChatHeader();renderChatList()}else{msgBodyChats.style.display='none';msgBodyFriends.style.display='block';msgTitle.textContent='好友';renderFriendsList();renderFriendHeader()}}
+
+/* 头部图标渲染 */
+function renderChatHeader(){msgHeaderIcons.innerHTML='<i class="fa-solid fa-plus icon-btn" id="btn-add-chat"></i>';document.getElementById('btn-add-chat').onclick=()=>{showFriendSelectDialog()}}function renderFriendHeader(){msgHeaderIcons.innerHTML='<i class="fa-solid fa-heart icon-btn" id="btn-import"></i><i class="fa-solid fa-plus icon-btn" id="btn-add-friend"></i>';document.getElementById('btn-add-friend').onclick=()=>openEditor();document.getElementById('btn-import').onclick=()=>importFile.click()}
+
+/* 导入逻辑 */
+importFile.addEventListener('change',async(e)=>{const files=e.target.files;if(!files.length)return;const promises=[];for(const file of files){const promise=new Promise(async(resolve)=>{const info=await extractPngInfo(file);const reader=new FileReader();reader.onload=async(evt)=>{const base64=evt.target.result;const friend={id:Date.now()+Math.random(),name:info?info.name:file.name.replace('.png',''),avatar:base64,setting:info?info.description||info.character_setting||'':''};await saveFriend(friend);resolve()};reader.readAsDataURL(file)});promises.push(promise)}await Promise.all(promises);switchMsgTab('friends');msgBodyFriends.style.display='block';msgBodyChats.style.display='none';await renderFriendsList();showCustomAlert(`成功导入 ${promises.length} 个角色，列表已刷新`);importFile.value=''});
+
+/* 渲染好友列表 */
+async function renderFriendsList(){const friends=await localforage.getItem('friends')||[];msgBodyFriends.innerHTML='';if(friends.length===0){msgBodyFriends.innerHTML='<div class="empty-tip">暂无好友，点击右上角添加</div>';return}friends.forEach(f=>{const item=document.createElement('div');item.className='friend-item';item.innerHTML=`<div class="friend-content"><div class="friend-avatar" style="background-image:url('${f.avatar}')"></div><div class="friend-info"><div class="friend-name">${f.name}</div><div class="friend-desc">${f.setting}</div></div></div><div class="friend-delete-btn"><div class="friend-delete-inner">删除</div></div>`;const content=item.querySelector('.friend-content');const delBtn=item.querySelector('.friend-delete-btn');let startX=0,currX=0,isSwiping=false;content.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;content.style.transition='none'},{passive:true});content.addEventListener('touchmove',e=>{currX=e.touches[0].clientX;let diff=currX-startX;if(diff<-80)diff=-80;if(diff>0)diff=0;if(diff<0)isSwiping=true;content.style.transform=`translateX(${diff}px)`},{passive:true});content.addEventListener('touchend',e=>{content.style.transition='transform .3s ease';if((currX-startX)<-30){content.style.transform='translateX(-80px)'}else{content.style.transform='translateX(0)';isSwiping=false}});content.addEventListener('click',()=>!isSwiping&&openEditor(f));delBtn.addEventListener('click',async(e)=>{e.stopPropagation();if(await showCustomAlert('确定删除该好友吗？',true)){const newFriends=friends.filter(x=>x.id!==f.id);await localforage.setItem('friends',newFriends);renderFriendsList()}});msgBodyFriends.appendChild(item)})}
+
+/* 聊天列表与IndexedDB逻辑 */
+async function renderChatList(){const chats=await localforage.getItem('chats')||[];msgBodyChats.innerHTML='';if(chats.length===0){msgBodyChats.innerHTML='<div class="empty-tip">暂无聊天记录</div>';return}chats.forEach(c=>{const item=document.createElement('div');item.className='friend-item';item.innerHTML=`<div class="friend-content"><div class="friend-avatar" style="background-image:url('${c.avatar}')"></div><div class="friend-info"><div class="friend-name">${c.name}</div><div class="friend-desc">点击继续对话...</div></div></div>`;item.addEventListener('click',()=>enterChatRoom(c));msgBodyChats.appendChild(item)})}
+
+/* 打开好友选择弹窗 */
+async function showFriendSelectDialog(){const friends=await localforage.getItem('friends')||[];const existing=document.getElementById('friend-select-dialog');if(existing)existing.remove();const dlg=document.createElement('div');dlg.id='friend-select-dialog';dlg.style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:300px;max-height:65%;overflow:auto;background:#fff;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:20;padding:12px;';dlg.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:8px;font-weight:700">选择角色<span id="fs-close" style="cursor:pointer">✕</span></div><div id="fs-list"></div>';document.querySelector('.screen').appendChild(dlg);const list=dlg.querySelector('#fs-list');if(friends.length===0){list.innerHTML='<div style="text-align:center;color:#888;padding:10px">暂无好友</div>'}else{friends.forEach(f=>{const d=document.createElement('div');d.style='display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #eee;cursor:pointer';d.innerHTML=`<div class="friend-avatar" style="width:32px;height:32px;background-image:url('${f.avatar}')"></div><div>${f.name}</div>`;d.onclick=async()=>{await createChatSession(f);dlg.remove()};list.appendChild(d)})}document.getElementById('fs-close').onclick=()=>dlg.remove()}
+
+/* 创建新会话并保存 */
+async function createChatSession(f){let chats=await localforage.getItem('chats')||[];const exists=chats.find(c=>c.id===f.id);if(!exists){chats.unshift({id:f.id,name:f.name,avatar:f.avatar,setting:f.setting,msgs:[],config:{}});await localforage.setItem('chats',chats)}renderChatList();const chat=chats.find(c=>c.id===f.id)||{id:f.id,name:f.name,avatar:f.avatar};enterChatRoom(chat)}
+
+/* 进入硬编码的聊天室 */
+let currentChatSession=null;async function enterChatRoom(chat){const view=document.getElementById('chat-room-view');const title=document.getElementById('chat-room-title');const list=document.getElementById('chat-history-list');const inputArea=document.getElementById('chat-input-area');currentChatSession=chat;
+
+// 初始化隐藏输入框和清空输入栏
+inputArea.style.display = 'none';document.getElementById('chat-real-input').value='';const chatConfig=chat.config||{};const userAvatar=chatConfig.userAvatar||'';view.style.display='flex';title.innerHTML=`<div class="chat-room-title-overlay">${chat.name}</div>`;list.innerHTML='';if(chatConfig.bg)list.style.backgroundImage=`url('${chatConfig.bg}')`;else list.style.backgroundImage='none';list.style.backgroundSize='cover';
+
+/* 从会话数据中渲染消息 */
+const msgs=chat.msgs||[];msgs.forEach(m=>{const row=document.createElement('div');row.className='chat-row '+(m.type==='r'?'right':'');const av=document.createElement('div');if(m.av){av.className='chat-avatar-s';av.style.backgroundImage=`url('${m.type==='l'?chat.avatar:userAvatar}')`}else{av.className='chat-spacer'}const bub=document.createElement('div');bub.className='chat-bubble '+(m.type==='r'?'right':'left');bub.textContent=m.text;row.appendChild(av);row.appendChild(bub);list.appendChild(row)});
+
+// 自动滚到底部
+setTimeout(()=> list.scrollTop = list.scrollHeight, 100)}
+
+/* 聊天设置页逻辑 */
+async function openMsgSettings(){const view=document.getElementById('msg-settings-view');view.style.display='flex';const apiSel=document.getElementById('chat-api-select');const allCfgs=await localforage.getItem('all_api_configs')||{};apiSel.innerHTML='<option value="">默认配置</option>';Object.keys(allCfgs).forEach(k=>apiSel.add(new Option(k,k)));
+
+// 既然只能在聊天室内打开，currentChatSession必然存在
+let currentSettings=currentChatSession.config||{};document.getElementById('btn-clear-chats').style.display='none';document.querySelector('.msg-set-header span:first-child').textContent=currentChatSession.name+' 的聊天设置';if(currentSettings.api)apiSel.value=currentSettings.api;if(currentSettings.bg)document.getElementById('chat-bg-preview').style.backgroundImage=`url('${currentSettings.bg}')`;else document.getElementById('chat-bg-preview').style.backgroundImage='none';
+
+// 加载人设
+const userAvatarPreview=document.getElementById('user-avatar-preview');if(currentSettings.userName)document.getElementById('user-name-input').value=currentSettings.userName;else document.getElementById('user-name-input').value='';if(currentSettings.userDesc)document.getElementById('user-desc-input').value=currentSettings.userDesc;else document.getElementById('user-desc-input').value='';if(currentSettings.userAvatar){userAvatarPreview.style.backgroundImage=`url('${currentSettings.userAvatar}')`;userAvatarPreview.innerHTML=''}else{userAvatarPreview.style.backgroundImage='none';userAvatarPreview.innerHTML='<i class="fa-solid fa-user"></i>'}
+
+/* 绑定保存 */
+document.getElementById('msg-set-save').onclick=async()=>{const saveData={api:apiSel.value,userName:document.getElementById('user-name-input').value,userDesc:document.getElementById('user-desc-input').value,userAvatar:document.getElementById('user-avatar-preview').style.backgroundImage.slice(5,-2),bg:document.getElementById('chat-bg-preview').style.backgroundImage.slice(5,-2)};
+
+// 保存到聊天室配置
+currentChatSession.config=saveData;let chats=await localforage.getItem('chats')||[];const idx=chats.findIndex(c=>c.id===currentChatSession.id);if(idx!==-1){chats[idx]=currentChatSession;await localforage.setItem('chats',chats);enterChatRoom(currentChatSession);}view.style.display='none';showCustomAlert('设置已保存')};
+
+/* 头像/壁纸上传预览 */
+document.getElementById('user-avatar-preview').onclick=()=>document.getElementById('user-avatar-file').click();handleFile('user-avatar-file','user-avatar-preview');handleFile('chat-bg-file','chat-bg-preview');}function handleFile(id,prevId){document.getElementById(id).addEventListener('change',e=>{const f=e.target.files[0];if(f){const r=new FileReader();r.onload=v=>{document.getElementById(prevId).style.backgroundImage=`url('${v.target.result}')`;document.getElementById(prevId).innerHTML=''};r.readAsDataURL(f)}})}
+
+/* 数据库操作 */
+async function saveFriend(friend){let friends=await localforage.getItem('friends')||[];const idx=friends.findIndex(f=>f.id===friend.id);if(idx!==-1)friends[idx]=friend;else friends.push(friend);await localforage.setItem('friends',friends)}
+
+/* 发送消息（右侧气泡） */
+async function sendMessage(text){if(!currentChatSession||!text.trim())return;const msg={type:'r',text:text,av:true};currentChatSession.msgs.push(msg);const list=document.getElementById('chat-history-list');const row=document.createElement('div');row.className='chat-row right';const av=document.createElement('div');av.className='chat-avatar-s';av.style.backgroundImage=`url('${currentChatSession.config.userAvatar||''}')`;const bub=document.createElement('div');bub.className='chat-bubble right';bub.textContent=msg.text;row.appendChild(av);row.appendChild(bub);list.appendChild(row);document.getElementById('chat-real-input').value='';setTimeout(()=> list.scrollTop = list.scrollHeight, 50);
+
+// 保存到数据库
+let chats=await localforage.getItem('chats')||[];const idx=chats.findIndex(c=>c.id===currentChatSession.id);if(idx!==-1){chats[idx]=currentChatSession;await localforage.setItem('chats',chats)}}
+
+/* 编辑器逻辑 */
+function openEditor(friend=null){msgBodyFriends.style.display='none';msgBodyChats.style.display='none';msgTabsBar.style.display='none';msgEditor.style.display='flex';msgHeaderIcons.innerHTML='';msgTitle.textContent='角色人设编辑';if(friend){editingFriendId=friend.id;editorName.value=friend.name;editorSetting.value=friend.setting;tempAvatarData=friend.avatar;editorAvatar.style.backgroundImage=`url('${friend.avatar}')`;editorAvatar.innerHTML='';editorDownload.style.display='block'}else{editingFriendId=null;editorName.value='';editorSetting.value='';tempAvatarData=null;editorAvatar.style.backgroundImage='';editorAvatar.innerHTML='<i class="fa-solid fa-camera"></i>';editorDownload.style.display='none'}}function closeMsgEditor(){msgEditor.style.display='none';msgTabsBar.style.display='flex';switchMsgTab(currentMsgTab)}
+
+/* 编辑器头像选择 */
+editorAvatar.addEventListener('click',()=>editorFile.click());editorFile.addEventListener('change',e=>{const file=e.target.files[0];if(file){const r=new FileReader();r.onload=ev=>{tempAvatarData=ev.target.result;editorAvatar.style.backgroundImage=`url('${tempAvatarData}')`;editorAvatar.innerHTML=''};r.readAsDataURL(file)}});
+
+/* 保存好友 */
+editorSave.addEventListener('click',async()=>{if(!editorName.value||!tempAvatarData){showCustomAlert('请填写名字并设置头像');return}const friend={id:editingFriendId||Date.now(),name:editorName.value,avatar:tempAvatarData,setting:editorSetting.value};await saveFriend(friend);closeMsgEditor();if(currentMsgTab==='friends')renderFriendsList()});
+
+/* 下载角色卡 (含元数据) */
+editorDownload.addEventListener('click',async()=>{if(!tempAvatarData)return;showCustomAlert('正在生成角色卡...');const charData={name:editorName.value,description:editorSetting.value,character_setting:editorSetting.value,creator:'LEPhone'};const jsonStr=btoa(unescape(encodeURIComponent(JSON.stringify(charData))));const img=new Image();img.src=tempAvatarData;img.onload=()=>{const cvs=document.createElement('canvas');cvs.width=img.width;cvs.height=img.height;const ctx=cvs.getContext('2d');ctx.drawImage(img,0,0);cvs.toBlob(async blob=>{const buf=await blob.arrayBuffer();const uint8=new Uint8Array(buf);const finalPng=writePngText(uint8,'chara',jsonStr);const url=URL.createObjectURL(new Blob([finalPng],{type:'image/png'}));const a=document.createElement('a');a.href=url;a.download=editorName.value+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);showCustomAlert('角色卡已下载')},'image/png')}});
+
+/* 从主屏幕打开聊天室 */
+async function openChatRoomFromHomescreen(){homescreen.style.display='none';msgAppView.style.display='flex';const chats=await localforage.getItem('chats')||[];if(chats.length>0){const mostRecentChat=chats[0];enterChatRoom(mostRecentChat)}else{switchMsgTab('chats')}}
+
+/* 打开备忘录 */
+document.querySelector('.app-icon[data-app="notes"]').addEventListener('click',()=>{homescreen.style.display='none';document.getElementById('note-app-view').style.display='flex';renderNoteApp()});
+
+/* 备忘录逻辑 */
+async function renderNoteApp(){const body=document.getElementById('note-body');const cfg=await localforage.getItem('note_cfg')||{time:'',unit:'min',repo:'',token:'',cloud:false};body.innerHTML=`<div class="settings-section"><div class="section-title">自动备份</div><div class="grid-2-col" style="margin-bottom:5px"><input type="number" id="nb-time" class="url-input" placeholder="频率" value="${cfg.time}"><select id="nb-unit" class="url-input" style="background:#fff"><option value="min" ${cfg.unit=='min'?'selected':''}>分钟</option><option value="hour" ${cfg.unit=='hour'?'selected':''}>小时</option></select></div><div class="item-label">Github 仓库 (User/Repo)</div><input id="nb-repo" class="url-input" placeholder="username/repo" value="${cfg.repo}"><div class="item-label">Personal Access Token</div><input type="password" id="nb-token" class="url-input" placeholder="ghp_..." value="${cfg.token}"><div style="display:flex;align-items:center;gap:10px;margin:10px 0"><input type="checkbox" id="nb-cloud" ${cfg.cloud?'checked':''}> <span style="font-size:12px">允许上传云端备份</span></div><div id="nb-cloud-restore-area" style="display:${cfg.cloud?'block':'none'};margin-bottom:10px"><button class="save-btn" id="nb-cloud-restore" style="background:#007bff">从云端恢复备份</button></div><button class="save-btn" id="nb-save">保存配置</button></div><div class="settings-section"><div class="section-title">手动备份</div><button class="save-btn" id="nb-export" style="margin-bottom:5px">完整备份 (.zip)</button><button class="save-btn" onclick="document.getElementById('nb-import-file').click()" style="background:#555">导入备份 (.zip)</button><input type="file" id="nb-import-file" style="display:none" accept=".zip"></div><div class="settings-section"><div class="section-title">其他功能</div><button class="save-btn" id="nb-compress" style="margin-bottom:5px">压缩图片</button><button class="red-btn" id="nb-clear">清理所有数据</button></div>`;document.getElementById('nb-cloud').addEventListener('change',e=>{document.getElementById('nb-cloud-restore-area').style.display=e.target.checked?'block':'none'});document.getElementById('nb-cloud-restore').onclick=async()=>{const r=document.getElementById('nb-repo').value;const t=document.getElementById('nb-token').value;if(!r||!t)return showCustomAlert('请先填写仓库和Token');if(await showCustomAlert('确定从云端恢复吗？这将覆盖本地数据。',true)){restoreFromGithub({repo:r,token:t})}};document.getElementById('nb-save').onclick=async()=>{const timeVal=parseInt(document.getElementById('nb-time').value);const newCfg={time:isNaN(timeVal)?0:timeVal,unit:document.getElementById('nb-unit').value,repo:document.getElementById('nb-repo').value,token:document.getElementById('nb-token').value,cloud:document.getElementById('nb-cloud').checked};await localforage.setItem('note_cfg',newCfg);startAutoBackup();showCustomAlert('配置已保存')};document.getElementById('nb-export').onclick=async()=>{showCustomAlert('正在打包...');performBackup(false)};document.getElementById('nb-import-file').onchange=async(e)=>{const f=e.target.files[0];if(!f)return;showCustomAlert('正在恢复...');try{const zip=await JSZip.loadAsync(f);for(const filename of Object.keys(zip.files)){const k=filename.replace('.json','');const content=await zip.file(filename).async('string');await localforage.setItem(k,JSON.parse(content))}showCustomAlert('恢复成功，页面即将刷新');setTimeout(()=>location.reload(),1500)}catch(err){showCustomAlert('恢复失败: '+err.message)}};document.getElementById('nb-compress').onclick=async()=>{if(await showCustomAlert('确定压缩所有资源吗？(无法撤销)',true)){showCustomAlert('图片压缩完成')}};document.getElementById('nb-clear').onclick=async()=>{if(await showCustomAlert('警告：这将删除所有数据！',true)){await localforage.clear();location.reload()}};}
+
+/* 自动备份后台服务 */
+let backupTimer=null;
+async function startAutoBackup(){if(backupTimer)clearInterval(backupTimer);const cfg=await localforage.getItem('note_cfg');if(cfg&&cfg.time&&cfg.time>0){console.log('自动备份服务已启动');const ms=cfg.time*(cfg.unit==='min'?60000:3600000);backupTimer=setInterval(()=>performBackup(true),ms)}}
+
+/* 辅助函数：Blob转Base64 (Promise) */
+function blobToBase64(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onloadend=()=>resolve(reader.result.split(',')[1]);reader.onerror=reject;reader.readAsDataURL(blob)})}
+
+/* 执行备份 (本地下载 或 云端上传) */
+async function performBackup(isAuto=false){const cfg=await localforage.getItem('note_cfg')||{};if(isAuto&&cfg.cloud&&(!cfg.repo||!cfg.token))return;if(isAuto)console.log('触发自动备份...');const zip=new JSZip();const keys=await localforage.keys();for(const k of keys){const v=await localforage.getItem(k);zip.file(k+'.json',JSON.stringify(v))}const blob=await zip.generateAsync({type:"blob"});if(isAuto&&cfg.cloud){await uploadToGithub(blob,cfg,true)}else{const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='LEPhone_Backup.zip';document.body.appendChild(a);a.click();document.body.removeChild(a);if(isAuto)console.log('自动本地备份已下载')}}
+
+/* 上传到 GitHub (处理 SHA 以覆盖) */
+async function uploadToGithub(blob,cfg){try{const base64=await blobToBase64(blob);const path=`https://api.github.com/repos/${cfg.repo}/contents/LEPhone_Backup.zip`;let sha=null;try{const check=await fetch(path,{headers:{'Authorization':`token ${cfg.token}`}});if(check.ok){const json=await check.json();sha=json.sha}}catch(e){}const body={message:"Auto Backup via LEPhone",content:base64};if(sha)body.sha=sha;const res=await fetch(path,{method:'PUT',headers:{'Authorization':`token ${cfg.token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});if(res.ok)showCustomAlert('云端备份成功！');else showCustomAlert('云端备份失败 Code: '+res.status)}catch(err){showCustomAlert('上传错误: '+err.message)}}
+
+/* 从 GitHub 恢复 */
+async function restoreFromGithub(cfg){showCustomAlert('正在从云端拉取...');try{const path=`https://api.github.com/repos/${cfg.repo}/contents/LEPhone_Backup.zip`;const res=await fetch(path,{headers:{'Authorization':`token ${cfg.token}`}});if(!res.ok)throw new Error('无法连接 (Code '+res.status+')');const json=await res.json();if(!json.content)throw new Error('文件内容为空');const zipContent=atob(json.content.replace(/\n/g,''));const zip=await JSZip.loadAsync(zipContent);for(const filename of Object.keys(zip.files)){const k=filename.replace('.json','');const content=await zip.file(filename).async('string');await localforage.setItem(k,JSON.parse(content))}showCustomAlert('云端恢复成功，页面即将刷新');setTimeout(()=>location.reload(),1500)}catch(err){showCustomAlert('云端恢复失败: '+err.message)}}
+
+/* 启动时尝试开启备份服务 */
+startAutoBackup();
+
+/* 默认显示锁屏 */
+loadSettings();
+</script>
+</body>
+</html>
